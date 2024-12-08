@@ -1,0 +1,113 @@
+---
+title: "Historical Murder Rate Trend in Queens"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-11-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Introduction
+
+This is an analysis of the number of gun related homicides that have taken place in the Queens Boro in the past 15 years. I used the NYPD data set "NYPD Gun Violence Historical" available on Data.gov.
+The data set has been filtered down to only include Homicides that took place in the Queens Boro. 
+
+## Overall Murder Trend
+
+Since 2006, the overall murder rate in Queens has been on the decline. Queen's gun homicide rate had significant year over year decline from the years 2005 to 2019. The COVID 19 pandemic caused murders using fire arms to significantly increase from 2020 to 2022. However in the past 2 years this spike has trended down significantly and in this past year 2024 the murder rate is comparable to what it was back in 2015. Even taking into account the COVID 19 spike, the over all trend shows that murder with firearms are still trending downward in Queens.    
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+# Load necessary library
+library(ggplot2)
+library(dplyr) # For data manipulation
+# Load the dataset
+NYPD_Queens <- readRDS("NYPD_Queens.rds")
+# Group and count occurrences of STATISTICAL_MURDER_FLAG by YEAR in NYPD_Queens
+murder_counts <- NYPD_Queens %>%
+  group_by(YEAR) %>%
+  summarise(Count = sum(STATISTICAL_MURDER_FLAG == TRUE))
+
+# Create the ggplot
+ggplot(data = murder_counts, aes(x = as.numeric(YEAR), y = Count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +  # Bar plot
+  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add trendline (linear model)
+  labs(
+    title = "Gun Homicide Trend in Queens",
+    x = "Year",
+    y = "Count of Gun Related Murders"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text
+```
+
+## Demographics 
+
+Below are pie chats showing the age and race demographics of the booked perpetrators of these murders. The average perparatator for murder in Queens is a Black male aged 25 - 44. 
+
+## Bias Note
+
+When looking at these statistics its important to note the general demographics of Queens. While the demographics of the perpetrators of these murders are primarily black and Hispanic, that is also in line with general demographics that reside in the Queens Boro. Being Black or Hispanic does not make anyone more prone to commit murder. These demographics are just in line with the general race of the population in Queens.   
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter out NULL and blank values, then calculate counts
+age_group_counts <- NYPD_Queens %>%
+  filter(PERP_AGE_GROUP != "NULL" & PERP_AGE_GROUP != "") %>%
+  group_by(PERP_AGE_GROUP) %>%
+  summarise(Count = n())
+
+# Create a pie chart with labels on slices
+ggplot(age_group_counts, aes(x = "", y = Count, fill = PERP_AGE_GROUP)) +
+  geom_bar(stat = "identity", width = 1, color = "white") + # Add white border for clarity
+  coord_polar(theta = "y") + # Convert bar chart to pie chart
+  geom_text(aes(label = Count), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", size = 4) + # Add labels on slices
+  labs(
+    title = "Age Demographics of Perpatators",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_void() + # Remove background and axes
+  theme(legend.title = element_blank()) # Remove legend title
+
+```
+
+## Race Demographics
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter out NULL and blank values, then calculate counts for PERP_RACE
+race_counts <- NYPD_Queens %>%
+  filter(PERP_RACE != "NULL" & PERP_RACE != "") %>%
+  group_by(PERP_RACE) %>%
+  summarise(Count = n())
+
+# Create a pie chart with labels on slices
+ggplot(race_counts, aes(x = "", y = Count, fill = PERP_RACE)) +
+  geom_bar(stat = "identity", width = 1, color = "white") + # Add white border for clarity
+  coord_polar(theta = "y") + # Convert bar chart to pie chart
+  geom_text(aes(label = Count), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", size = 4) + # Add labels on slices
+  labs(
+    title = "Race Demographics of Perpatators",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_void() + # Remove background and axes
+  theme(legend.title = element_blank()) # Remove legend title
+
+```
+
+## Sources 
+https://catalog.data.gov/dataset
